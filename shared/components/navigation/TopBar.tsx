@@ -22,53 +22,48 @@ export default function TopBar() {
   const pathWithoutLocale = removeLocaleFromPath(pathname);
 
   const [isVisible, setIsVisible] = useState(true);
-  const [mounted, setMounted] = useState(false);
   const lastScrollY = useRef(0);
 
-  // Ensure component is mounted on client
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    // Find the scroll container (ClientLayout div with data-scroll-restoration-id)
+    const scrollContainer = document.querySelector(
+      '[data-scroll-restoration-id="container"]',
+    );
 
-  useEffect(() => {
-    if (!mounted) return;
+    if (!scrollContainer) {
+      console.warn(
+        'Scroll container not found, TopBar scroll behavior disabled',
+      );
+      return;
+    }
 
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      console.log('Scroll event:', {
-        currentScrollY,
-        lastScrollY: lastScrollY.current,
-        isVisible,
-      });
+      const currentScrollY = scrollContainer.scrollTop;
 
       // Always show when at top of page
       if (currentScrollY <= 10) {
-        console.log('At top - showing');
         setIsVisible(true);
       }
       // Hide when scrolling down past threshold
       else if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
-        console.log('Scrolling down - hiding');
         setIsVisible(false);
       }
       // Show when scrolling up
       else if (currentScrollY < lastScrollY.current) {
-        console.log('Scrolling up - showing');
         setIsVisible(true);
       }
 
       lastScrollY.current = currentScrollY;
     };
 
-    console.log('Adding scroll listener');
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    scrollContainer.addEventListener('scroll', handleScroll, {
+      passive: true,
+    });
 
     return () => {
-      console.log('Removing scroll listener');
-      window.removeEventListener('scroll', handleScroll);
+      scrollContainer.removeEventListener('scroll', handleScroll);
     };
-  }, [mounted, isVisible]);
+  }, []);
 
   const navItems: NavItem[] = [
     { name: 'Kana', href: '/kana', charIcon: 'あ' },
@@ -94,8 +89,6 @@ export default function TopBar() {
     }
     return pathWithoutLocale === href;
   };
-
-  console.log('TopBar render - isVisible:', isVisible, 'mounted:', mounted);
 
   return (
     <>
